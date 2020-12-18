@@ -1,0 +1,48 @@
+{
+  "name": "electron_game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "deploy": "electron-builder --windows nsis:x64"
+  },
+  "build": {
+    "productName": "bvt-first-game",
+    "appId": "com.blueviolet.game",
+    "asar": false,
+    "protocols": {
+      "name": "bvt-first-game",
+      "schemes": [
+        "bvt_first_game"
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ],
+      "icon": "./icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "./icon.ico",
+      "createDesktopShortcut": true
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^11.0.2",
+    "electron-builder": "^22.9.1"
+  },
+  "dependencies": {
+    "fs": "0.0.1-security"
+  }
+}
