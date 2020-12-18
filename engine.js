@@ -87,22 +87,49 @@ class Vector {
 class Sprite {
     constructor(src, width = 32, height = 32, speed = 1) {
         if(isNaN(speed) || speed <= 0) throw new Error("Argument speed should be larger than 0");
-        this.image = [];
+        this.src = [];
         src.forEach(e => {
             //preloading
             let image = new Image(width, height);
             image.src = e;
             
             //adding to sprite
-            this.image.push(image);
+            this.src.push(image);
         });
+        this.time = 0;
         this.frame = 0;
         this.type = "Sprite";
         this.speed = speed;
     }
 
     Animate() {
-        
+        const img = new Image();
+        if(this.src.length === 1) {
+            img.src = this.src[0];
+            return img;
+        }
+        this.time++;
+        if(this.time % this.speed === 0) {
+            this.frame++;
+        }
+        if(this.time === this.src.length * this.speed + 1) {
+            this.time = 0;
+            this.frame = 0;
+        }
+        img.src = this.src[this.frame];
+        return img;
+    }
+}
+
+class Camera {
+    constructor(x = 0, y = 0) {
+        this.x = x;
+        this.y = y;
+    }
+
+    Vec(v = null) {
+        if(v === null) return new Vector(this.x, this.y);
+        return new Vector(v.x - this.x, v.y - this.y);
     }
 }
 
