@@ -281,11 +281,11 @@ function Update() {
 
 const sleep = time => new Promise(resolve => setTimeout(resolve, time));
 
+/* Example
 //fps: 60
 let loop;
 
-async function onDeviceReady() {
-	screen.orientation.lock('landscape');
+async function onReady() {
     await sleep(10000);
     //Web Loading time
 	//화면의 넓이와 높이 구하기
@@ -303,4 +303,5 @@ async function onDeviceReady() {
 	document.getElementById("loading").outerHTML = "";
 }
 
-document.addEventListener("deviceready", onDeviceReady, false);
+onReady();
+*/
