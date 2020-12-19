@@ -27,15 +27,13 @@ function toCode(k) {
     return String(k).toUpperCase().charCodeAt();
 }
 
-class Scene {
-    constructor() {
-        this.Objects = [];
-        this.UI = [];
-        this.type = "Scene";
-    }
+window.addEventListener('keydown', keyInput);
+window.addEventListener('keyup', keyInput);
 
-    Start() {}
-    Update() {}
+//키 입력
+function keyInput(event) {
+	if(event.type === "keydown") key[event.keyCode] = true;
+	if(event.type === "keyup") delete(key[event.keyCode]);
 }
 
 class Vector {
@@ -298,7 +296,7 @@ async function onDeviceReady() {
 	//Canvas의 넓이와 높이를 화면 크기에 맞게 조정
 	can.width = width;
 	can.height = height;
-	setInterval(function() {
+	loop = setInterval(function() {
 		Update();
 	}, 1000 / 60);
 	Start();
