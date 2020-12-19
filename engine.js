@@ -176,6 +176,7 @@ module.exports.GameObject = class {
             this.height = this.sprite.height;
         }
         this.speed = 10;
+        this.tag = [];
     }
 
     Update() {}
