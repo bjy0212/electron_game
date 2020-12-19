@@ -1,70 +1,56 @@
-const { TouchBarOtherItemsProxy } = require("electron");
-
 //캔버스, 컨텍스트 선언부
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+let wWidth = window.innerWidth;
+let wHeight = window.innerHeight - 32;
+
+let width, height;
+
 //속도 조절용 변수
 const deltaTime = 6;
 
-//화면의 넓이와 높이 구하기
-let width = (window.innerWidth > 0) ? window.innerWidth : screen.width;
-let height = (window.innerHeight > 0) ? window.innerHeight : screen.height;
-//header 높이 빼주기
-height -= 32;
-
-//mouse 객체
-const mouse = {
-	c : false,
-	x : 0,
-	y : 0
-};
-
 //키보드 객체
-const key = {};
-
-function toCode(k) {
-    return String(k).toUpperCase().charCodeAt();
-}
+module.exports.keys = {};
 
 window.addEventListener('keydown', keyInput);
 window.addEventListener('keyup', keyInput);
 
 //키 입력
 function keyInput(event) {
-	if(event.type === "keydown") key[event.keyCode] = true;
-	if(event.type === "keyup") delete(key[event.keyCode]);
+	if(event.type === "keydown") module.exports.keys[event.keyCode] = true;
+	if(event.type === "keyup") delete(module.exports.keys[event.keyCode]);
 }
 
-class Vector {
+module.exports.Vector = class {
     constructor(x = 0, y = 0) {
-        this.x = Number(Number(x).toFixed(2));
-        this.y = Number(Number(y).toFixed(2));
+        this.x = Number(x.toFixed(2));
+        this.y = Number(y.toFixed(2));
         this.type = "Vector";
     }
 
     Up() {
-        return new Vector(0, -1);
+        return new module.exports.Vector(0, -1);
     }
 
     Down() {
-        return new Vector(0, 1);
+        return new module.exports.Vector(0, 1);
     }
 
     Left() {
-        return new Vector(-1, 0);
+        return new module.exports.Vector(-1, 0);
     }
 
     Right() {
-        return new Vector(1, 0);
+        return new module.exports.Vector(1, 0);
     }
 
     Zero() {
-        return new Vector(0, 0);
+        return new module.exports.Vector(0, 0);
     }
 
     Length() {
-        return Math.sqrt((this.x * this.x) + (this.y * this.y));
+        return Number(Math.sqrt((this.x * this.x) + (this.y * this.y)));
     }
 
     Normalize() {
@@ -73,12 +59,12 @@ class Vector {
     }
 
     Normalized() {
-        return new Vector(this.x / this.Length(), this.y / this.Length());
+        return new module.exports.Vector(this.x / this.Length(), this.y / this.Length());
     }
 
     DistanceBetween(vec) {
         if(!vec.type || vec.type !== "Vector") throw new Error("Vector argument is needed");
-        return (new Vector(this.x - vec.x, this.y - vec.y)).Length();
+        return (new module.exports.Vector(this.x - vec.x, this.y - vec.y)).Length();
     }
 
     Add(vec) {
@@ -88,7 +74,7 @@ class Vector {
     }
 }
 
-class Sprite {
+module.exports.Sprite = class {
     constructor(src, width = 32, height = 32, speed = 1) {
         if(isNaN(speed) || speed <= 0) throw new Error("Argument speed should be larger than 0");
         this.type = "Sprite";
@@ -105,13 +91,14 @@ class Sprite {
         this.frame = 0;
         this.type = "Sprite";
         this.speed = speed;
+        this.width = this.src[0].width;
+        this.height = this.src[0].height;
     }
 
     Animate() {
         const img = new Image();
         if(this.src.length === 1) {
-            img.src = this.src[0];
-            return img;
+            return this.src[0];
         }
         this.time++;
         if(this.time % this.speed === 0) {
@@ -121,12 +108,11 @@ class Sprite {
             this.time = 0;
             this.frame = 0;
         }
-        img.src = this.src[this.frame];
-        return img;
+        return this.src[this.frame];
     }
 }
 
-class Camera {
+module.exports.Camera = class {
     constructor(x = 0, y = 0) {
         this.type = "Camera";
         this.x = x;
@@ -134,18 +120,18 @@ class Camera {
     }
 
     Vec(v = null) {
-        if(v === null) return new Vector(this.x, this.y);
-        return new Vector(v.x - this.x, v.y - this.y);
+        if(v === null) return new module.exports.Vector(this.x, this.y);
+        return new module.exports.Vector(v.x - this.x, v.y - this.y);
     }
 
     In(gameObject) {
         if(gameObject.type !== "GameObject") throw new Error("argument should be GameObject");
 
-        return gameObject.x + (gameObject.width / 2) > this.x - (canvas.width / 2) && gameObject.x - (gameObject.width / 2) < this.x + (canvas.width / 2) && gameObject.y + (gameObject.height / 2) > this.y - (canvas.height / 2) && gameObject.y - (gameObject.height / 2) > this.y + (canvas.height / 2);
+        return gameObject.x + (gameObject.width / 2) > this.x - (width / 2) && gameObject.x - (gameObject.width / 2) < this.x + (width / 2) && gameObject.y + (gameObject.height / 2) > this.y - (height / 2) && gameObject.y - (gameObject.height / 2) < this.y + (height / 2);
     }
 }
 
-class Scene {
+module.exports.Scene = class {
     constructor(cam, obj, back = null) {
         this.type = "Scene";
         this.mainCamera = cam;
@@ -155,7 +141,7 @@ class Scene {
     }
 }
 
-class Background {
+module.exports.Background = class {
     constructor(src, x = 0, y = 0, w = null, h = null) {
         this.type = "Background";
         this.img = new Image();
@@ -175,24 +161,21 @@ class Background {
     }
 }
 
-class GameObject {
-    constructor(name, sprite = null, x = 0, y = 0) {
+module.exports.GameObject = class {
+    constructor(name, sprite = null, x = 0, y = 0, w = 32, h = 32) {
         this.name = name;
         this.type = "GameObject";
         this.x = x;
         this.y = y;
         this.sprite = sprite;
         this.solid = true;
-        this.width = 32;
-        this.height = 32;
-        this.speed = 10;
-        if(this.sprite) this.sprite.src[0].onload = function() {
-            const obj = Engine.Scene.objects[name];
-            if(obj.width === 1) {
-                obj.width = this.width;
-                obj.height = this.height;
-            }
+        this.width = w;
+        this.height = h;
+        if(this.sprite) {
+            this.width = this.sprite.width;
+            this.height = this.sprite.height;
         }
+        this.speed = 10;
     }
 
     Update() {}
@@ -200,14 +183,16 @@ class GameObject {
     Draw() {
         const cam = Engine.Scene.mainCamera;
         let cx = this.x - cam.x + (width / 2);
-		let cy = this.y - cam.y + (height / 2);
-		ctx.drawImage(this.sprite.animation.animate(), cx - (this.width / 2), cy - (this.height / 2), this.width, this.height);
+        let cy = this.y - cam.y + (height / 2);
+        ctx.drawImage(this.sprite.Animate(), cx - (this.width / 2), cy - (this.height / 2), this.width, this.height);
     }
 
     Move(vec) {
-        vec.normalize();
-        this.x += (vec.x * this.speed) / deltaTime;
-        this.y += (vec.y * this.speed) / deltaTime;
+        vec.Normalize();
+        this.x += Number(((vec.x * this.speed) / deltaTime).toFixed(2));
+        this.y += Number(((vec.y * this.speed) / deltaTime).toFixed(2));
+        this.x = Number(this.x.toFixed(2));
+        this.y = Number(this.y.toFixed(2));
     }
 
     Collided(o) {
@@ -215,7 +200,7 @@ class GameObject {
     }
 }
 
-class Effect {
+module.exports.Effect = class {
     constructor(name, x, y, sprite, duration) {
         this.name = name;
         this.sprite = sprite;
@@ -241,49 +226,67 @@ class Effect {
     }
 }
 
-const Engine = {};
-Engine.Scene = new Scene(new Camera(), {});
-Engine.Draw = function() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if(Engine.Scene.background) {
-        Engine.Scene.background.Draw();
+module.exports.Engine = class {
+    constructor(scene = new module.exports.Scene(new module.exports.Camera(), {})) {
+        this.Scene = scene;
     }
 
-    //오브젝트 그리기
-    for(i in Engine.Scene.objects) {
-        if(Engine.Scene.mainCamera.In(Engine.Scene.objects[i])) Engine.Scene.objects[i].Draw();
+    Draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if(this.Scene.background) {
+            this.Scene.background.Draw();
+        }
+
+        //오브젝트 그리기 for i in 써야함 무조건! this 때문에
+        for(let i of Object.keys(this.Scene.objects)) {
+            if(this.Scene.mainCamera.In(this.Scene.objects[i])) this.Scene.objects[i].Draw();
+        }
+
+        //이펙트 그리기
+        for(let i of Object.keys(this.Scene.effects)) {
+            if(this.Scene.effects[i].duration <= 0) delete(this.Scene.effects[i]);
+            if(this.Scene.mainCamera.In(this.Scene.effects[i]))
+            this.Scene.effects[i].Draw();
+        }
     }
 
-    //이펙트 그리기
-    for(i in Engine.Scene.effects) {
-        if(Engine.Scene.effects[i].duration <= 0) delete(Engine.Scene.effects[i]);
-        if(Engine.Scene.mainCamera.In(Engine.Scene.effects[i]))
-        Engine.Scene.effects[i].Draw();
+    Update() {
+        for(let i of Object.keys(this.Scene.objects)) {
+            if(this.Scene.objects[i].Update) {
+                this.Scene.objects[i].Update();
+            }
+        }
+    
+        for(let i of Object.keys(this.Scene.effects)) {
+            this.Scene.effects[i].Update();
+        }
+    
+        //기본 드로우
+        this.Draw();
     }
-};
-
-//메인 업데이트 함수(유저가 관여 하는 부분이 아님)
-function Update() {
-	for(i in Engine.Scene.objects) {
-		if(Engine.Scene.objects[i].update) {
-			Engine.Scene.objects[i].Update();
-		}
-	}
-
-	for(i in Engine.Scene.effects) {
-		Engine.Scene.effects[i].Update();
-	}
-
-	//기본 드로우
-	Engine.Draw();
 }
 
-const sleep = time => new Promise(resolve => setTimeout(resolve, time));
+module.exports.sleep = time => new Promise(resolve => setTimeout(resolve, time));
+
+module.exports.Start = function() {
+    wWidth = window.innerWidth;
+    wHeight = window.innerHeight - 32;
+
+    canvas.width = wWidth;
+    canvas.height = wHeight;
+
+    width = canvas.width;
+    height = canvas.height;
+}
+
+window.addEventListener("resize", module.exports.Start);
 
 /* Example
 //fps: 60
 let loop;
+
+const Game = new Engine();
 
 async function onReady() {
     await sleep(10000);
@@ -294,12 +297,11 @@ async function onReady() {
     height -= 32;
     //header 높이 빼주기
 	//Canvas의 넓이와 높이를 화면 크기에 맞게 조정
-	can.width = width;
-	can.height = height;
+	canvas.width = width;
+	canvas.height = height;
 	loop = setInterval(function() {
-		Update();
+		Game.Update();
 	}, 1000 / 60);
-	Start();
 	document.getElementById("loading").outerHTML = "";
 }
 
