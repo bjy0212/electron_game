@@ -182,7 +182,7 @@ module.exports.GameObject = class {
     Update() {}
     
     Draw() {
-        const cam = Engine.Scene.mainCamera;
+        const cam = module.exports.Engine.Scene.mainCamera;
         let cx = this.x - cam.x + (width / 2);
         let cy = this.y - cam.y + (height / 2);
         ctx.drawImage(this.sprite.Animate(), cx - (this.width / 2), cy - (this.height / 2), this.width, this.height);
@@ -208,7 +208,7 @@ module.exports.Effect = class {
         this.width = 32;
         this.height = 32;
         if(this.sprite) this.sprite.src[0].onload = function() {
-            const obj = Engine.Scene.objects[name];
+            const obj = module.exports.Engine.Scene.objects[name];
             if(obj.width === 1) {
                 obj.width = this.width;
                 obj.height = this.height;
@@ -220,19 +220,16 @@ module.exports.Effect = class {
     }
 
     Draw() {
-        const cam = Engine.Scene.mainCamera;
+        const cam = module.exports.Engine.Scene.mainCamera;
         let cx = this.x - cam.x + (width / 2);
 		let cy = this.y - cam.y + (height / 2);
 		ctx.drawImage(this.animation.animate(), cx - (this.width / 2), cy - (this.height / 2), this.width, this.height);
     }
 }
 
-module.exports.Engine = class {
-    constructor(scene = new module.exports.Scene(new module.exports.Camera(), {})) {
-        this.Scene = scene;
-    }
-
-    Draw() {
+module.exports.Engine = {
+    Scene: new module.exports.Scene(new module.exports.Camera(), {}),
+    Draw: function() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         if(this.Scene.background) {
@@ -250,9 +247,8 @@ module.exports.Engine = class {
             if(this.Scene.mainCamera.In(this.Scene.effects[i]))
             this.Scene.effects[i].Draw();
         }
-    }
-
-    Update() {
+    },
+    Update: function() {
         for(let i of Object.keys(this.Scene.objects)) {
             if(this.Scene.objects[i].Update) {
                 this.Scene.objects[i].Update();
@@ -286,8 +282,6 @@ window.addEventListener("resize", module.exports.Start);
 /* Example
 //fps: 60
 let loop;
-
-const Game = new Engine();
 
 async function onReady() {
     await sleep(10000);

@@ -9,7 +9,7 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 //fps: 60
-let loop, Engine, width, height;
+let loop, width, height;
 
 function Start() {
     const player = new bvt.GameObject("player", new bvt.Sprite(["./sprites/sans.png"], 48, 48), 0, 0);
@@ -25,8 +25,7 @@ function Start() {
     const objs = {
         "player": player
     };
-    const newScene = new bvt.Scene(new bvt.Camera(), objs);
-    Engine = new bvt.Engine(newScene);
+    bvt.Engine.Scene = new bvt.Scene(new bvt.Camera(), objs);;
 }
 
 async function onReady() {
@@ -42,7 +41,7 @@ async function onReady() {
     Start();
 
 	loop = setInterval(function() {
-		Engine.Update();
+		bvt.Engine.Update();
     }, 1000 / 60);
     
 	document.getElementById("loading").outerHTML = "";
