@@ -1,14 +1,8 @@
-const bvt = require("./engine.js");
-
 String.prototype.toCode = function() {
     return String(this).toUpperCase().charCodeAt();
 }
 
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-
-//fps: 60
-let loop, width, height;
+let loop;
 
 function Start() {
     const player = new bvt.GameObject("player", new bvt.Sprite(["./sprites/sans.png"], 48, 48), 0, 0);
